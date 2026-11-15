@@ -111,7 +111,7 @@ jobs:
         if: matrix.ios-simulator == true
         env:
           CARGO_ENCODED_RUSTFLAGS: ""
-        run: cargo build --verbose --package openh264-sys2 --target=${{ matrix.target }}
+        run: cargo build --verbose --package lecop-openh264-sys2 --target=${{ matrix.target }}
       - name: Rust - Style
         if: matrix.style-check == true
         run: cargo fmt --check
