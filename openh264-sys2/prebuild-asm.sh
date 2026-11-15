@@ -14,7 +14,7 @@ for target in "elf64 UNIX64" "win64 WIN64" "macho64 UNIX64 -DPREFIX"; do
     find "$dir" -path '*/x86/*.asm' ! -name asm_inc.asm | sort | while read -r f; do
       # Same-named sources exist in several directories of one library, so keep the parent path in the object name.
       name=$(echo "${f#$dir/}" | tr '/' '_' | sed 's/\.asm$//')
-      nasm -f "$fmt" -I upstream/codec/common/x86/ -D"$1" ${2:-} -w-all "$f" -o "$out/$fmt/$lib/$name.o"
+      nasm --reproducible -f "$fmt" -I upstream/codec/common/x86/ -D"$1" ${2:-} -w-all "$f" -o "$out/$fmt/$lib/$name.o"
     done
   done
 done
