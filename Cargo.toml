@@ -9,13 +9,13 @@ members = [
 authors = ["Ralf Biedert <rb@xr.io>"]
 edition = "2024"
 license = "BSD-2-Clause"
-repository = "https://github.com/ralfbiedert/openh264-rs"
+repository = "https://github.com/michele-xilo/lecop-openh264"
 rust-version = "1.89"
 version = "0.9.10"
 
 [workspace.dependencies]
 # Ours
-openh264-sys2 = { path = "openh264-sys2", version = "0.9.0", default-features = false }
+openh264-sys2 = { package = "lecop-openh264-sys2", path = "openh264-sys2", version = "0.9.10", default-features = false }
 
 # Others
 libloading = "0.9.0"

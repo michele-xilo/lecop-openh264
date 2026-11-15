@@ -1,9 +1,9 @@
 [package]
-name = "openh264-sys2"
-description = "Low-level bindings for OpenH264."
+name = "lecop-openh264-sys2"
+description = "Low-level bindings for OpenH264, with prebuilt x86_64 assembly so no nasm is needed. Fork of openh264-sys2 for lecop."
 keywords = ["multimedia", "encoding", "video"]
 categories = ["api-bindings", "multimedia::video"]
-documentation = "https://docs.rs/openh264-sys2/"
+documentation = "https://docs.rs/lecop-openh264-sys2/"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -15,6 +15,9 @@ exclude = [
     "**/*.dll",
     "**/*.so"
 ]
+
+[lib]
+name = "openh264_sys2"
 
 [features]
 default = ["source"]

@@ -212,6 +212,29 @@ mod source_build {
         }
     }
 
+    /// The nasm output format of the objects in `prebuilt/`, if this target has them.
+    fn prebuilt_format(target: &Target) -> Option<&'static str> {
+        match (target.arch, target.os) {
+            (TargetArch::X86_64, TargetOs::Linux) => Some("elf64"),
+            (TargetArch::X86_64, TargetOs::Windows) => Some("win64"),
+            (TargetArch::X86_64, TargetOs::Macos) => Some("macho64"),
+            _ => None,
+        }
+    }
+
+    fn add_prebuilt(format: &str, root: &str, cc_build_command: &mut Build, config: &NasmConfiguration) {
+        let lib = Path::new(root).file_name().unwrap().to_str().unwrap();
+        let dir = Path::new("prebuilt").join(format).join(lib);
+        println!("cargo:rerun-if-changed=prebuilt");
+        for object in WalkDir::new(&dir).sort_by_file_name() {
+            let object = object.unwrap();
+            if object.path().extension().is_some_and(|e| e == "o") {
+                cc_build_command.object(object.path());
+            }
+        }
+        cc_build_command.define(&config.cpp_define, None);
+    }
+
     #[allow(unused)]
     fn try_compile_nasm(target: &Target, cc_build_command: &mut Build, root: &str) {
         if std::env::var("OPENH264_NO_ASM").is_ok() {
@@ -223,6 +246,15 @@ mod source_build {
             println!("No NASM configuration found for target, not using any assembly.\nTarget: {target:?}");
             return;
         };
+
+        // x86_64 on Linux, Windows and macOS ships assembled objects (see prebuild-asm.sh), so no nasm is needed.
+        // Setting OPENH264_NASM assembles from source with the nasm on the machine instead.
+        if let Some(format) = prebuilt_format(target) {
+            if std::env::var("OPENH264_NASM").is_err() {
+                add_prebuilt(format, root, cc_build_command, &config);
+                return;
+            }
+        }
 
         // Try to compile NASM targets
         let mut nasm_build = nasm_rs::Build::new();

@@ -1,9 +1,9 @@
 [package]
-name = "openh264"
-description = "Idiomatic bindings for OpenH264."
+name = "lecop-openh264"
+description = "Idiomatic bindings for OpenH264, built on lecop-openh264-sys2. Fork of openh264 for lecop."
 keywords = ["multimedia", "encoding", "video"]
 categories = ["api-bindings", "multimedia::video"]
-documentation = "https://docs.rs/openh264/"
+documentation = "https://docs.rs/lecop-openh264/"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -17,6 +17,9 @@ exclude = [
     "**/*.mp4",
     "**/*.bmp"
 ]
+
+[lib]
+name = "openh264"
 
 [lints]
 workspace = true

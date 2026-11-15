@@ -1,0 +1,60 @@
+name: prebuilt x86_64 objects
+on:
+  push:
+    branches:
+      - 'lecop-0.9.10'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  # The objects in openh264-sys2/prebuilt must be exactly what nasm makes from the sources: nobody can review machine
+  # code, so this job is the review.
+  objects-match-source:
+    runs-on: ubuntu-latest
+    env:
+      NASM_VERSION: "3.01"
+      NASM_SHA256: b7324cbe86e767b65f26f467ed8b12ad80e124e3ccb89076855c98e43a9eddd4
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: build the pinned nasm
+        run: |
+          curl -sSfL -o nasm.tar.xz "https://www.nasm.us/pub/nasm/releasebuilds/$NASM_VERSION/nasm-$NASM_VERSION.tar.xz"
+          echo "$NASM_SHA256  nasm.tar.xz" | sha256sum -c -
+          mkdir "$RUNNER_TEMP/nasm" && tar xf nasm.tar.xz -C "$RUNNER_TEMP/nasm" --strip-components=1
+          cd "$RUNNER_TEMP/nasm" && ./configure && make -j"$(nproc)" nasm
+          echo "$RUNNER_TEMP/nasm" >> "$GITHUB_PATH"
+      - run: nasm -v
+      - name: assemble and compare
+        run: |
+          openh264-sys2/prebuild-asm.sh "$RUNNER_TEMP/objects"
+          diff -r "$RUNNER_TEMP/objects" openh264-sys2/prebuilt
+
+  # What a crate depending on this one gets: assembly on, no nasm on the machine.
+  build-without-nasm:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-13]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - name: remove nasm (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get remove -y nasm || true
+      # The Windows image carries a nasm (Strawberry Perl).
+      - name: remove nasm (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: while p=$(command -v nasm); do rm -f "$p"; done
+      - name: no nasm on PATH
+        shell: bash
+        run: "! command -v nasm"
+      - name: the build links the assembly
+        shell: bash
+        run: |
+          cargo build --release -p lecop-openh264-sys2 -vv 2>&1 | tee build.log
+          ! grep -q "Failed to compile NASM" build.log
+      - run: cargo test --release -p lecop-openh264 -- --test-threads=1
