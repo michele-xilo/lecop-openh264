@@ -249,11 +249,11 @@ mod source_build {
 
         // x86_64 on Linux, Windows and macOS ships assembled objects (see prebuild-asm.sh), so no nasm is needed.
         // Setting OPENH264_NASM assembles from source with the nasm on the machine instead.
-        if let Some(format) = prebuilt_format(target) {
-            if std::env::var("OPENH264_NASM").is_err() {
-                add_prebuilt(format, root, cc_build_command, &config);
-                return;
-            }
+        if let Some(format) = prebuilt_format(target)
+            && std::env::var("OPENH264_NASM").is_err()
+        {
+            add_prebuilt(format, root, cc_build_command, &config);
+            return;
         }
 
         // Try to compile NASM targets
