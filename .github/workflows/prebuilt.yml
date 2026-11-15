@@ -36,11 +36,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-13]
+        include:
+          - {os: ubuntu-latest, target: x86_64-unknown-linux-gnu}
+          - {os: windows-latest, target: x86_64-pc-windows-msvc}
+          # Cross-built on the arm64 runner: builds and links the x86_64 objects, cannot run them.
+          - {os: macos-latest, target: x86_64-apple-darwin}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          targets: ${{ matrix.target }}
       - name: remove nasm (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get remove -y nasm || true
@@ -55,6 +61,8 @@ jobs:
       - name: the build links the assembly
         shell: bash
         run: |
-          cargo build --release -p lecop-openh264-sys2 -vv 2>&1 | tee build.log
+          cargo build --release --target ${{ matrix.target }} -p lecop-openh264-sys2 -vv 2>&1 | tee build.log
           ! grep -q "Failed to compile NASM" build.log
-      - run: cargo test --release -p lecop-openh264 -- --test-threads=1
+      - name: tests (not run when cross-built)
+        if: runner.os != 'macOS'
+        run: cargo test --release --target ${{ matrix.target }} -p lecop-openh264 -- --test-threads=1
